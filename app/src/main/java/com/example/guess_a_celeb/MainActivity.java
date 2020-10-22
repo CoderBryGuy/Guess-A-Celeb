@@ -5,7 +5,10 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.InputStream;
@@ -23,6 +26,9 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> celebNames = new ArrayList<>();
     int chosenCeleb;
     ImageView myImageView;
+    String[] answers = new String[4];
+    int locationOfCorrectAnswer = 0;
+    Button btn0, btn1, btn2, btn3;
 
     public class ImageDownloader extends AsyncTask <String, Void, Bitmap>{
 
@@ -75,10 +81,62 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void newQuestion(){
+
+        try {
+            Random rand = new Random(celebURLs.size());
+            chosenCeleb = rand.nextInt();
+
+            ImageDownloader imageTask = new ImageDownloader();
+            Bitmap celebImage = imageTask.execute(celebURLs.get(chosenCeleb)).get();
+            myImageView.setImageBitmap(celebImage);
+
+            locationOfCorrectAnswer = rand.nextInt(4);
+            int incorrectAnswerLocation;
+
+            for (int i = 0; i < 4; i++) {
+                if (i == locationOfCorrectAnswer) {
+                    answers[i] = celebNames.get(chosenCeleb);
+                } else {
+                    incorrectAnswerLocation = rand.nextInt(celebURLs.size());
+                    while (incorrectAnswerLocation == chosenCeleb) {
+                        incorrectAnswerLocation = rand.nextInt();
+                    }
+
+                    answers[i] = celebNames.get(incorrectAnswerLocation);
+                }
+            }
+
+
+            btn0.setText(answers[0]);
+            btn1.setText(answers[1]);
+            btn2.setText(answers[2]);
+            btn3.setText(answers[3]);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void buttonClicked(View view){
+        if(view.getTag().toString().equals(String.valueOf(locationOfCorrectAnswer))){
+            Toast.makeText(getApplicationContext(), "Correct!!", Toast.LENGTH_SHORT).show();
+        }else {
+            Toast.makeText(getApplicationContext(), "Incorrect!! It was " + celebNames.get(chosenCeleb), Toast.LENGTH_SHORT).show();
+        }
+
+        newQuestion();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        btn0 = (Button)findViewById(R.id.btn0);
+        btn1 = (Button)findViewById(R.id.btn1);
+        btn2 = (Button)findViewById(R.id.btn2);
+        btn3 = (Button)findViewById(R.id.btn3);
+
 
         myImageView = (ImageView)findViewById(R.id.myImageView);
 
@@ -106,12 +164,8 @@ public class MainActivity extends AppCompatActivity {
 
             Log.i("Contents of URL", result);
 
-            Random rand = new Random(celebURLs.size());
-            chosenCeleb = rand.nextInt();
+            newQuestion();
 
-            ImageDownloader imageTask = new ImageDownloader();
-            Bitmap celebImage = imageTask.execute(celebURLs.get(chosenCeleb)).get();
-            myImageView.setImageBitmap(celebImage);
 
         }catch (Exception e){
             e.printStackTrace();
